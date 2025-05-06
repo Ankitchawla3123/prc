@@ -1,0 +1,476 @@
+HIRARCHICAL 
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import scipy.cluster.hierarchy as sch
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.datasets import load_iris
+from sklearn.preprocessing import StandardScaler
+
+# Load Iris dataset
+iris = load_iris()
+X = iris.data
+y = iris.target
+
+# Normalize features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Check if dataset is properly scaled before dendrogram generation
+print("Dataset mean after scaling:", np.mean(X_scaled, axis=0))
+print("Dataset std deviation after scaling:", np.std(X_scaled, axis=0))
+
+# Plot Dendrogram
+plt.figure(figsize=(10, 5))
+linkage_matrix = sch.linkage(X_scaled, method='ward')
+sch.dendrogram(linkage_matrix)
+plt.title('Dendrogram for Hierarchical Clustering on Iris Dataset')
+plt.xlabel('Data Points')
+plt.ylabel('Euclidean Distance')
+plt.show()
+
+# Determine optimal number of clusters from dendrogram
+from scipy.cluster.hierarchy import fcluster
+max_d = 7  # Adjust this threshold based on dendrogram visualization
+optimal_clusters = len(set(fcluster(linkage_matrix, max_d, criterion='distance')))
+print(f"Optimal number of clusters based on dendrogram: {optimal_clusters}")
+
+# Implement Agglomerative Hierarchical Clustering with optimal clusters
+hierarchical = AgglomerativeClustering(n_clusters=optimal_clusters, metric='euclidean', linkage='ward')
+labels = hierarchical.fit_predict(X_scaled)
+
+# Plot the clusters
+plt.scatter(X_scaled[:, 0], X_scaled[:, 1], c=labels, cmap='viridis', marker='o', edgecolor='k', alpha=0.6)
+plt.title(f'Hierarchical Clustering with {optimal_clusters} Clusters on Iris Dataset')
+plt.show()
+
+
+ANN
+
+# Import necessary libraries
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.datasets import load_wine
+from sklearn.neural_network import MLPClassifier
+
+# Loading the Wine dataset
+data = load_wine()
+X = data.data  # Features
+y = data.target  # Labels (multi-class classification)
+
+# Spliting the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Normalizing the data using StandardScaler
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Initializing the MLPClassifier
+mlp = MLPClassifier(hidden_layer_sizes=(16, 8), activation='relu', solver='adam', max_iter=300, random_state=42)
+
+# Training the model
+mlp.fit(X_train, y_train)
+
+# Making predictions on the test data
+y_pred = mlp.predict(X_test)
+
+# Evaluating the model
+accuracy = accuracy_score(y_test, y_pred)
+conf_matrix = confusion_matrix(y_test, y_pred)
+report = classification_report(y_test, y_pred)
+
+print("Accuracy:", accuracy)
+print("Confusion Matrix:\n", conf_matrix)
+print("Classification Report:\n", report)
+
+# Predicting for new data
+sample_data = np.array([X_test[0]])  
+prediction = mlp.predict(sample_data)
+print("Prediction:", prediction)
+
+
+LINEAR REG
+
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.datasets import load_wine
+
+# Load Wine Dataset
+wine = load_wine()
+X = wine.data
+Y = wine.target
+
+# Train-Test Split
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
+
+# Simple Linear Regression Model (Using first feature for demonstration)
+simple_model = LinearRegression()
+simple_model.fit(X_train[:, [0]], Y_train)  # Using only the first feature
+Y_pred_simple = simple_model.predict(X_test[:, [0]])
+
+# Multiple Linear Regression Model
+multiple_model = LinearRegression()
+multiple_model.fit(X_train, Y_train)
+Y_pred_multiple = multiple_model.predict(X_test)
+
+# Evaluation Metrics for Simple Linear Regression
+simple_mse = mean_squared_error(Y_test, Y_pred_simple)
+simple_r2 = r2_score(Y_test, Y_pred_simple)
+
+# Evaluation Metrics for Multiple Linear Regression
+multiple_mse = mean_squared_error(Y_test, Y_pred_multiple)
+multiple_r2 = r2_score(Y_test, Y_pred_multiple)
+
+# K-Fold Cross-Validation for Multiple Values of k
+k_values = [3, 5, 7, 10]
+simple_cv_results = {}
+multiple_cv_results = {}
+
+for k in k_values:
+    simple_cv_scores = cross_val_score(simple_model, X[:, [0]], Y, cv=k, scoring='r2')
+    multiple_cv_scores = cross_val_score(multiple_model, X, Y, cv=k, scoring='r2')
+
+    simple_cv_results[k] = np.mean(simple_cv_scores)
+    multiple_cv_results[k] = np.mean(multiple_cv_scores)
+
+# Display Results
+print("\nSimple Linear Regression:")
+print(f"MSE: {simple_mse}")
+print(f"R² Score: {simple_r2}")
+for k, score in simple_cv_results.items():
+    print(f"{k}-Fold CV Average R² Score: {score}")
+
+print("\nMultiple Linear Regression:")
+print(f"MSE: {multiple_mse}")
+print(f"R² Score: {multiple_r2}")
+for k, score in multiple_cv_results.items():
+    print(f"{k}-Fold CV Average R² Score: {score}")
+
+
+
+RIDGE AND LASO
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_wine
+from sklearn.linear_model import Ridge, Lasso
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+
+# Load Wine dataset
+wine = load_wine()
+X = wine.data
+y = X[:, 0]  # Let's predict 'Alcohol' (feature 0)
+X = np.delete(X, 0, axis=1)  # Remove Alcohol from features
+
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Ridge Regression
+ridge_model = Ridge(alpha=1.0)
+ridge_model.fit(X_train, y_train)
+ridge_pred = ridge_model.predict(X_test)
+ridge_mse = mean_squared_error(y_test, ridge_pred)
+print(f"Ridge Regression MSE: {ridge_mse:.4f}")
+
+# Lasso Regression
+lasso_model = Lasso(alpha=1.0, max_iter=10000)
+lasso_model.fit(X_train, y_train)
+lasso_pred = lasso_model.predict(X_test)
+lasso_mse = mean_squared_error(y_test, lasso_pred)
+print(f"Lasso Regression MSE: {lasso_mse:.4f}")
+
+# Plotting
+plt.scatter(y_test, ridge_pred, color='red', label='Ridge Predictions', alpha=0.6)
+plt.scatter(y_test, lasso_pred, color='green', label='Lasso Predictions', alpha=0.6)
+plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], 'k--', lw=2, label="Ideal Prediction")
+plt.xlabel("Actual Alcohol")
+plt.ylabel("Predicted Alcohol")
+plt.title("Ridge vs Lasso Regression on Wine Dataset")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+
+SVM
+
+# Import necessary libraries
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.datasets import load_iris
+
+# Loading the Iris dataset
+data = load_iris()
+X = data.data  # Features
+y = data.target  # Labels (multi-class classification)
+
+# Splitting the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Initializing SVM model with RBF kernel (default)
+svm_model = SVC(kernel='rbf', C=1.0, gamma='scale')  
+
+# Fitting the model on the training data
+svm_model.fit(X_train, y_train)
+
+# Making predictions on the test data
+y_pred = svm_model.predict(X_test)
+
+# Evaluating the model
+accuracy = accuracy_score(y_test, y_pred)
+conf_matrix = confusion_matrix(y_test, y_pred)
+report = classification_report(y_test, y_pred)
+
+print("Accuracy:", accuracy)
+print("Confusion Matrix:\n", conf_matrix)
+print("Classification Report:\n", report)
+
+# Example: Predicting for new data
+sample_data = np.array([X_test[0]])   
+prediction = svm_model.predict(sample_data)
+print("Prediction:", prediction)
+
+
+DTREEE CLASSFIER
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+# Load data
+data = load_iris()
+X, y = data.data, data.target
+
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Train model
+model = DecisionTreeClassifier()
+model.fit(X_train, y_train)
+
+# Predict
+y_pred = model.predict(X_test)
+
+# Evaluate
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred, average='macro')
+recall = recall_score(y_test, y_pred, average='macro')
+f1 = f1_score(y_test, y_pred, average='macro')
+
+# Print results
+print("Accuracy:", accuracy)
+print("Precision:", precision)
+print("Recall:", recall)
+print("F1 Score:", f1)
+
+
+K MEANS
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.datasets import load_iris
+from sklearn.preprocessing import StandardScaler
+
+# Load Iris dataset
+iris = load_iris()
+X = iris.data
+y = iris.target
+
+# Normalize features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Implement K-Means Clustering
+k = 3  # Number of clusters (same as the number of Iris classes)
+kmeans = KMeans(n_clusters=k, random_state=42)
+kmeans.fit(X_scaled)
+
+# Predict cluster labels
+labels = kmeans.predict(X_scaled)
+
+# Plot the clusters (using the first two features for 2D visualization)
+plt.scatter(X_scaled[:, 0], X_scaled[:, 1], c=labels, cmap='viridis', marker='o', edgecolor='k', alpha=0.6)
+plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], c='red', marker='X', s=200, label='Centroids')
+plt.title('K-Means Clustering on Iris Dataset')
+plt.legend()
+plt.xlabel('Sepal Length (scaled)')
+plt.ylabel('Sepal Width (scaled)')
+plt.show()
+
+
+KNN 
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+# Generate a sample dataset (Iris dataset)
+from sklearn.datasets import load_iris
+data = load_iris()
+X = data.data
+y = data.target
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Normalize features for better performance
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Implement KNN Classifier
+k = 5  # Number of neighbors
+knn = KNeighborsClassifier(n_neighbors=k)
+knn.fit(X_train, y_train)
+
+# Make predictions
+y_pred = knn.predict(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred, average='macro')
+recall = recall_score(y_test, y_pred, average='macro')
+f1 = f1_score(y_test, y_pred, average='macro')
+
+# Print results
+print(f'KNN Classifier Accuracy: {accuracy:.2f}')
+print(f'Precision: {precision:.2f}')
+print(f'Recall: {recall:.2f}')
+print(f'F1 Score: {f1:.2f}')
+
+
+LOGISTIC REG
+
+# Import necessary libraries
+import pandas as pd
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+# Load the Iris dataset
+iris = load_iris()
+X = iris.data
+y = iris.target
+feature_names = iris.feature_names
+target_names = iris.target_names
+
+# For binary classification, choose only two classes (e.g., Setosa and Versicolor)
+X_binary = X[y != 2]
+y_binary = y[y != 2]
+
+# Select only two features (e.g., sepal length and sepal width)
+X_binary = X_binary[:, :2]
+
+# Split the data
+X_train, X_test, y_train, y_test = train_test_split(X_binary, y_binary, test_size=0.2, random_state=42)
+
+# Initialize and train the Logistic Regression model
+log_reg = LogisticRegression()
+log_reg.fit(X_train, y_train)
+
+# Make predictions
+y_pred = log_reg.predict(X_test)
+
+# Evaluate the model
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
+print("Classification Report:\n", classification_report(y_test, y_pred, target_names=target_names[:2]))
+
+# Example: Predict on new data
+import numpy as np
+sample = np.array([[5.0, 3.5]])  # Sample sepal length and width
+prediction = log_reg.predict(sample)
+print("Prediction (0 = Setosa, 1 = Versicolor):", prediction)
+
+
+NAVIE BAISE
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report
+from sklearn.datasets import load_iris
+
+# Load dataset (Iris dataset as an example)
+data = load_iris()
+X, y = data.data, data.target
+
+# Split into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Initialize and train Naïve Bayes Classifier
+nb_classifier = GaussianNB()
+nb_classifier.fit(X_train, y_train)
+
+# Make predictions
+y_pred = nb_classifier.predict(X_test)
+
+# Evaluate model
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred, average='macro')
+recall = recall_score(y_test, y_pred, average='macro')
+f1 = f1_score(y_test, y_pred, average='macro')
+report = classification_report(y_test, y_pred)
+
+# Print results
+print(f"Accuracy: {accuracy:.2f}")
+print(f"Precision: {precision:.2f}")
+print(f"Recall: {recall:.2f}")
+print(f"F1 Score: {f1:.2f}")
+print("\nClassification Report:\n", report)
+
+
+POLY REG
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_wine
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+
+# Load the Wine dataset
+wine = load_wine()
+X = wine.data[:, [0]]  # Feature: Alcohol
+y = wine.data[:, 1]    # Target: Malic Acid
+y = y.reshape(-1, 1)
+
+# Transform features to polynomial features
+degree = 3
+poly_features = PolynomialFeatures(degree=degree)
+X_poly = poly_features.fit_transform(X)
+
+# Train the polynomial regression model
+model = LinearRegression()
+model.fit(X_poly, y)
+
+# Predict values
+y_pred = model.predict(X_poly)
+
+# Evaluate model performance
+mse = mean_squared_error(y, y_pred)
+print(f"Mean Squared Error: {mse:.4f}")
+
+# Plot the results
+plt.scatter(X, y, label="Actual Data", alpha=0.7)
+# Sort X for a smooth curve
+sorted_idx = X[:, 0].argsort()
+plt.plot(X[sorted_idx], y_pred[sorted_idx], color='red', label="Polynomial Fit", linewidth=2)
+plt.xlabel("Alcohol")
+plt.ylabel("Malic Acid")
+plt.title("Polynomial Regression on Wine Data")
+plt.legend()
+plt.show()
